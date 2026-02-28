@@ -1,0 +1,63 @@
+{
+  "projectType": "frontend",
+  "projectName": "Hvilken Båt Er Det I Dag",
+  "projectDescription": "A React app that displays daily cruise ship schedules for Eidfjord, Norway",
+  "theme": "palm",
+  "primaryColor": "#0EA5E9",
+  "lightColor": "#7DD3FC",
+  "darkColor": "#0284C7",
+  "navigation": {
+    "groups": [
+      {
+        "group": "Overview",
+        "pages": [
+          "introduction",
+          "demo"
+        ]
+      },
+      {
+        "group": "Getting Started",
+        "pages": [
+          "installation",
+          "development"
+        ]
+      },
+      {
+        "group": "Architecture",
+        "pages": [
+          "components",
+          "state-management",
+          "data-model"
+        ]
+      },
+      {
+        "group": "Development",
+        "pages": [
+          "building",
+          "testing",
+          "contributing"
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Interactive date navigation with keyboard shortcuts",
+    "Real-time cruise ship schedule display",
+    "Detailed ship information including tonnage, passengers, and ports",
+    "Responsive glassmorphism design",
+    "Anchor status indicator for docked ships"
+  ],
+  "publicApiSurface": [
+    "App - Main application component",
+    "DailyMessage - Dynamic message based on ship count",
+    "ShipList - List of ships for selected date",
+    "ShipListItem - Individual ship card with details",
+    "Toolbar - Date navigation controls",
+    "Illustration - Decorative buoy SVG",
+    "schedule - Jotai atom with React Query for ship data",
+    "selectedDay - Jotai atom for current selected date",
+    "selectedShipList - Derived atom filtering ships by date",
+    "dailyMessage - Derived atom generating contextual message",
+    "Ship - TypeScript type for ship data model"
+  ]
+}
