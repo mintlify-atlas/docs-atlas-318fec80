@@ -1,94 +1,235 @@
 ---
-title: 'Development'
-description: 'Preview changes locally to update your docs'
+title: Local development
+description: Set up and run Hvilken Båt Er Det I Dag locally for development
 ---
 
-<Info>
-  **Prerequisites**:
-  - Node.js version 19 or higher
-  - A docs repository with a `docs.json` file
-</Info>
+Once you've installed the dependencies, you can start developing the application locally.
 
-Follow these steps to install and run Mintlify on your operating system.
+## Starting the development server
 
 <Steps>
-<Step title="Install the Mintlify CLI">
+  <Step title="Start the dev server">
+    Run the development server with hot module replacement:
 
-```bash
-npm i -g mint
-```
-</Step>
+    <CodeGroup>
+    ```bash npm
+    npm run dev
+    ```
 
-<Step title="Preview locally">
+    ```bash yarn
+    yarn dev
+    ```
 
-Navigate to your docs directory where your `docs.json` file is located, and run the following command:
+    ```bash pnpm
+    pnpm dev
+    ```
+    </CodeGroup>
 
-```bash
-mint dev
-```
+    The server will start on **port 3000** by default.
+  </Step>
 
-A local preview of your documentation will be available at `http://localhost:3000`.
+  <Step title="Open in browser">
+    Navigate to [http://localhost:3000](http://localhost:3000) to see the app running.
 
-</Step>
+    The page will automatically reload when you make changes to the source code.
+  </Step>
 </Steps>
 
-## Custom ports
+<Info>
+  Vite provides extremely fast hot module replacement (HMR), so your changes appear almost instantly in the browser.
+</Info>
 
-By default, Mintlify uses port 3000. You can customize the port Mintlify runs on by using the `--port` flag. For example, to run Mintlify on port 3333, use this command:
+## Available scripts
 
-```bash
-mint dev --port 3333
-```
+The project includes several npm scripts for development:
 
-If you attempt to run Mintlify on a port that's already in use, it will use the next available port:
-
-```md
-Port 3000 is already in use. Trying 3001 instead.
-```
-
-## Mintlify versions
-
-Please note that each CLI release is associated with a specific version of Mintlify. If your local preview does not align with the production version, please update the CLI:
+### `dev`
+Starts the Vite development server with HMR on port 3000.
 
 ```bash
-npm mint update
+npm run dev
 ```
 
-## Validating links
-
-The CLI can assist with validating links in your documentation. To identify any broken links, use the following command:
+### `build`
+Creates an optimized production build in the `dist/` directory.
 
 ```bash
-mint broken-links
+npm run build
 ```
 
-## Deployment
+### `preview`
+Serves the production build locally for testing before deployment.
 
-If the deployment is successful, you should see the following:
+```bash
+npm run preview
+```
 
-<Frame>
-  <img src="/images/checks-passed.png" alt="Screenshot of a deployment confirmation message that says All checks have passed." style={{ borderRadius: '0.5rem' }} />
-</Frame>
+### `lint`
+Checks code for issues using Biome.
 
-## Code formatting
+```bash
+npm run lint
+```
 
-We suggest using extensions on your IDE to recognize and format MDX. If you're a VSCode user, consider the [MDX VSCode extension](https://marketplace.visualstudio.com/items?itemName=unifiedjs.vscode-mdx) for syntax highlighting, and [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode) for code formatting.
+### `lint:fix`
+Automatically fixes linting issues where possible.
+
+```bash
+npm run lint:fix
+```
+
+### `format`
+Formats code according to project style rules.
+
+```bash
+npm run format
+```
+
+### `test`
+Runs the test suite using Vitest.
+
+```bash
+npm run test
+```
+
+## Development workflow
+
+<Steps>
+  <Step title="Make changes">
+    Edit files in the `src/` directory. Changes to components, styles, or state will hot-reload automatically.
+  </Step>
+
+  <Step title="Check code quality">
+    Run the linter to catch issues early:
+
+    ```bash
+    npm run lint
+    ```
+
+    Fix issues automatically:
+
+    ```bash
+    npm run lint:fix
+    ```
+  </Step>
+
+  <Step title="Run tests">
+    Ensure your changes don't break existing functionality:
+
+    ```bash
+    npm run test
+    ```
+  </Step>
+
+  <Step title="Format code">
+    Before committing, format your code:
+
+    ```bash
+    npm run format
+    ```
+  </Step>
+</Steps>
+
+## Vite configuration
+
+The app uses Vite with the following configuration:
+
+```typescript
+import react from '@vitejs/plugin-react'
+import jotaiDebugLabel from 'jotai/babel/plugin-debug-label'
+import jotaiReactRefresh from 'jotai/babel/plugin-react-refresh'
+import { defineConfig } from 'vite'
+import tsconfigPaths from 'vite-tsconfig-paths'
+
+export default defineConfig({
+  plugins: [
+    react({ 
+      babel: { 
+        plugins: [jotaiDebugLabel, jotaiReactRefresh] 
+      } 
+    }), 
+    tsconfigPaths()
+  ],
+  server: {
+    port: 3000,
+  },
+})
+```
+
+**Key plugins:**
+- **@vitejs/plugin-react** - Enables React Fast Refresh
+- **jotai/babel/plugin-debug-label** - Adds debug labels to Jotai atoms
+- **jotai/babel/plugin-react-refresh** - Preserves atom state during HMR
+- **vite-tsconfig-paths** - Resolves TypeScript path aliases (`~/*`)
+
+## State management
+
+The app uses Jotai for state management with a provider at the root:
+
+```tsx
+import { Provider } from 'jotai'
+
+root.render(
+  <React.StrictMode>
+    <Provider>
+      <App />
+    </Provider>
+  </React.StrictMode>
+)
+```
+
+All state is managed through atoms defined in `src/state/Atoms.tsx`. See the [state management](/state-management) guide for details.
+
+## Styling approach
+
+The app uses Tailwind CSS for styling:
+
+- **Utility-first** - Classes like `bg-gradient-to-br`, `backdrop-blur-md`
+- **Custom colors** - Defined in `tailwind.config.js` (e.g., `ocean-blue`, `lollipop`)
+- **Responsive design** - Mobile-first with `sm:`, `md:` breakpoints
+- **Glassmorphism** - Semi-transparent backgrounds with backdrop blur
+
+## TypeScript
+
+The project is written in TypeScript with strict mode enabled. Type checking happens during:
+
+- Development (in your editor)
+- Build time (via Vite)
+- Testing (via Vitest)
+
+All component props and data structures are fully typed.
 
 ## Troubleshooting
 
-<AccordionGroup>
-  <Accordion title='Error: Could not load the "sharp" module using the darwin-arm64 runtime'>
+### Port already in use
 
-    This may be due to an outdated version of node. Try the following:
-    1. Remove the currently-installed version of the CLI: `npm remove -g mint`
-    2. Upgrade to Node v19 or higher.
-    3. Reinstall the CLI: `npm i -g mint`
-  </Accordion>
+If port 3000 is already taken, you can change it in `vite.config.ts`:
 
-  <Accordion title="Issue: Encountering an unknown error">
-  
-    Solution: Go to the root of your device and delete the `~/.mintlify` folder. Then run `mint dev` again.
-  </Accordion>
-</AccordionGroup>
+```typescript
+server: {
+  port: 3001, // or any available port
+}
+```
 
-Curious about what changed in the latest CLI version? Check out the [CLI changelog](https://www.npmjs.com/package/mintlify?activeTab=versions).
+### HMR not working
+
+If hot module replacement stops working:
+
+1. Stop the dev server (Ctrl+C)
+2. Clear the Vite cache: `rm -rf node_modules/.vite`
+3. Restart: `npm run dev`
+
+### Type errors
+
+If you see TypeScript errors that don't make sense:
+
+1. Restart your editor's TypeScript server
+2. Delete `node_modules` and reinstall dependencies
+3. Check `tsconfig.json` for any issues
+
+## Next steps
+
+- Learn about the [component architecture](/components)
+- Understand [state management](/state-management) patterns
+- Explore the [data model](/data-model) and validation
+- Set up [testing](/testing) for your changes

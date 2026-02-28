@@ -1,0 +1,359 @@
+---
+title: State management
+description: Learn about Jotai atoms and state flow in Hvilken Båt Er Det I Dag
+---
+
+The app uses [Jotai](https://jotai.org/) for state management, providing a minimal and atomic approach to state. All state is defined in a single file and accessed directly by components.
+
+## State architecture
+
+The state layer consists of four atoms:
+
+1. **schedule** - Async query atom that fetches ship data
+2. **selectedDay** - Writable atom storing the current date
+3. **selectedShipList** - Derived atom filtering ships by date
+4. **dailyMessage** - Derived atom generating dynamic message JSX
+
+```plaintext
+┌─────────────┐
+│  schedule   │ (atomWithQuery)
+│  [API data] │
+└──────┬──────┘
+       │
+       ├──────────────┐
+       │              │
+       ▼              ▼
+┌─────────────┐  ┌──────────────┐
+│ selectedDay │  │selectedShip  │ (derived)
+│  (writable) │─>│    List      │
+└─────────────┘  └──────┬───────┘
+                        │
+                        ▼
+                 ┌──────────────┐
+                 │ dailyMessage │ (derived)
+                 │  (JSX elem)  │
+                 └──────────────┘
+```
+
+## Atoms reference
+
+<Tabs>
+  <Tab title="schedule">
+    Fetches and validates the ship schedule from a remote GitHub Gist using React Query integration.
+
+    **Type:** `atomWithQuery<Ship[]>`
+
+    **Location:** `src/state/Atoms.tsx:34`
+
+    **Features:**
+    - Uses Jotai's React Query integration (`jotai-tanstack-query`)
+    - Validates response with Zod schema
+    - Automatic caching and refetching via React Query
+    - Returns an object with `data`, `isLoading`, `error`, etc.
+
+    ```tsx
+    export const schedule = atomWithQuery(() => ({
+      queryKey: ['schedule'],
+      queryFn: async () => {
+        const res = await fetch(
+          'https://gist.githubusercontent.com/steef-o/44bf82ba28a9ab09f681e8f7a3e471c7/raw/6f3b8650906e5a2c59d5faa2e0a8d0b7366a30f6/cruise-2025'
+        ).then((res) => res.json())
+        return list.parse(res)
+      },
+    }))
+    ```
+
+    **Usage:**
+    ```tsx
+    const [scheduleResult] = useAtom(schedule)
+    // scheduleResult.data contains Ship[] when loaded
+    // scheduleResult.isLoading is true during fetch
+    ```
+
+    <Note>
+      The `atomWithQuery` automatically handles loading states and errors. Components consuming this atom will suspend during the initial fetch if wrapped in `<Suspense>`.
+    </Note>
+  </Tab>
+
+  <Tab title="selectedDay">
+    A writable atom that stores the currently selected date for filtering ships.
+
+    **Type:** `PrimitiveAtom<Dayjs>`
+
+    **Location:** `src/state/Atoms.tsx:45`
+
+    **Default value:** Current date using Day.js
+
+    ```tsx
+    export const selectedDay = atom<Dayjs>(dayjs())
+    ```
+
+    **Read and write:**
+    ```tsx
+    const [selectedDate, setSelectedDate] = useAtom(selectedDay)
+
+    // Read current value
+    console.log(selectedDate.format('YYYY-MM-DD'))
+
+    // Update to next day
+    setSelectedDate((prevState) => prevState.add(1, 'day'))
+
+    // Set specific date
+    setSelectedDate(dayjs('2025-06-15'))
+    ```
+
+    **Used by:**
+    - `Toolbar` component (read/write)
+    - `selectedShipList` atom (read)
+  </Tab>
+
+  <Tab title="selectedShipList">
+    A derived (read-only) atom that filters the ship schedule to only include ships visiting on the selected day.
+
+    **Type:** `Atom<Ship[]>`
+
+    **Location:** `src/state/Atoms.tsx:48`
+
+    **Dependencies:**
+    - `schedule` - Source data
+    - `selectedDay` - Filter criteria
+
+    ```tsx
+    export const selectedShipList = atom((get) => {
+      const scheduleResult = get(schedule)
+
+      // Check if the data property exists and is an array before filtering
+      if (scheduleResult.data && Array.isArray(scheduleResult.data)) {
+        return scheduleResult.data.filter(
+          (ship: Ship) => ship.date === get(selectedDay).format('DD.MM.YYYY')
+        )
+      }
+
+      // Return an empty array if data is not available
+      return []
+    })
+    ```
+
+    **Behavior:**
+    - Returns empty array if schedule data is not loaded
+    - Filters ships by comparing `ship.date` with selected day formatted as `DD.MM.YYYY`
+    - Recalculates automatically when either dependency changes
+
+    **Usage:**
+    ```tsx
+    const [shipList] = useAtom(selectedShipList)
+    // shipList is Ship[] - always safe to use
+    ```
+
+    <Warning>
+      The atom handles the async nature of `schedule` internally. You don't need to check for loading states when consuming `selectedShipList`.
+    </Warning>
+  </Tab>
+
+  <Tab title="dailyMessage">
+    A derived atom that returns dynamic JSX based on the number of ships visiting on the selected day.
+
+    **Type:** `Atom<JSX.Element>`
+
+    **Location:** `src/state/Atoms.tsx:61`
+
+    **Dependencies:**
+    - `selectedShipList` - Determines message variant
+
+    ```tsx
+    export const dailyMessage = atom((get) => {
+      const shipList = get(selectedShipList)
+
+      // Two Ships
+      if (shipList.length === 2) {
+        return <h2>I dag er det {<span className="font-bold">to</span>} båtere på besøk i Eidfjord</h2>
+      }
+      // One Ship.
+      if (shipList.length === 1) {
+        return <h2>I dag er det {<span className="font-bold">{shipList[0].shipName}</span>} som er på besøk i Eidfjord</h2>
+      }
+      // No Ship(s).
+      return <h2>Det er {<span className="font-bold">ingen</span>} båter i Eidfjord i dag</h2>
+    })
+    ```
+
+    **Message variants:**
+
+    | Ship count | Message |
+    |------------|----------|
+    | 0 | Det er **ingen** båter i Eidfjord i dag |
+    | 1 | I dag er det **[ship name]** som er på besøk i Eidfjord |
+    | 2 | I dag er det **to** båtere på besøk i Eidfjord |
+
+    **Usage:**
+    ```tsx
+    const [message] = useAtom(dailyMessage)
+    return <div>{message}</div>
+    ```
+
+    <Note>
+      This atom returns JSX directly, making it unique in the app's state layer. The JSX is memoized by Jotai and only recalculates when `selectedShipList` changes.
+    </Note>
+  </Tab>
+</Tabs>
+
+## Data flow patterns
+
+### Unidirectional data flow
+
+State flows in one direction through derived atoms:
+
+```tsx
+// User interaction
+setSelectedDate(newDate)
+  ↓
+// Atom updates
+selectedDay changes
+  ↓
+// Derived atoms recalculate
+selectedShipList filters new ships
+  ↓
+// More derived atoms recalculate  
+dailyMessage generates new JSX
+  ↓
+// Components re-render
+DailyMessage, Illustration, ShipList update
+```
+
+### Read-only consumption
+
+Most components only read from atoms without writing:
+
+```tsx
+// Read-only pattern
+const [shipList] = useAtom(selectedShipList)
+
+// Only Toolbar writes to selectedDay
+const [selectedDate, setSelectedDate] = useAtom(selectedDay)
+```
+
+### Derived atom composition
+
+Derived atoms build on each other to create complex logic from simple primitives:
+
+```tsx
+// Base atoms
+const schedule = atomWithQuery(...)  // Fetches data
+const selectedDay = atom(dayjs())    // Stores selection
+
+// First-level derivation
+const selectedShipList = atom((get) => {
+  return get(schedule).data.filter(...get(selectedDay)...)
+})
+
+// Second-level derivation
+const dailyMessage = atom((get) => {
+  const ships = get(selectedShipList)
+  return generateMessage(ships.length)
+})
+```
+
+## Integration with React Query
+
+The `schedule` atom uses `atomWithQuery` from `jotai-tanstack-query`, combining Jotai's atomic state with React Query's async capabilities:
+
+```tsx
+import { atomWithQuery } from 'jotai-tanstack-query'
+
+export const schedule = atomWithQuery(() => ({
+  queryKey: ['schedule'],
+  queryFn: async () => {
+    // Fetch and parse
+  },
+}))
+```
+
+**Benefits:**
+- Automatic caching
+- Background refetching
+- Loading and error states
+- Stale-while-revalidate pattern
+- Integrates seamlessly with Suspense
+
+## Validation with Zod
+
+All incoming data is validated using Zod before entering the state layer:
+
+```tsx
+import { z } from 'zod'
+
+const ship = z.object({
+  day: z.string(),
+  date: z.string(),
+  // ... more fields
+}).strict()
+
+const list = z.array(ship)
+
+// In queryFn
+return list.parse(res) // Throws if validation fails
+```
+
+This ensures type safety at runtime and prevents invalid data from corrupting the state.
+
+## Best practices
+
+<AccordionGroup>
+  <Accordion title="Keep atoms focused">
+    Each atom has a single responsibility:
+    - `schedule` - Data fetching
+    - `selectedDay` - User selection
+    - `selectedShipList` - Filtering
+    - `dailyMessage` - Presentation logic
+
+    This makes the state layer easy to test and reason about.
+  </Accordion>
+
+  <Accordion title="Use derived atoms for computed values">
+    Never compute values in components when you can derive them in atoms:
+
+    ```tsx
+    // ❌ Bad - computing in component
+    const Component = () => {
+      const [schedule] = useAtom(schedule)
+      const [day] = useAtom(selectedDay)
+      const ships = schedule.data?.filter(s => s.date === day.format('DD.MM.YYYY'))
+      // ...
+    }
+
+    // ✅ Good - derived atom
+    const selectedShipList = atom((get) => {
+      return get(schedule).data.filter(...)
+    })
+
+    const Component = () => {
+      const [ships] = useAtom(selectedShipList)
+      // ...
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Validate external data">
+    Always validate data from external sources with Zod:
+
+    ```tsx
+    queryFn: async () => {
+      const res = await fetch(url).then(r => r.json())
+      return list.parse(res) // Validates and throws if invalid
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Handle loading states with Suspense">
+    Use React Suspense at the app boundary rather than checking loading states in every component:
+
+    ```tsx
+    // App.tsx
+    <Suspense fallback={<Loading />}>
+      <App />
+    </Suspense>
+    ```
+
+    This keeps components simple and focused on rendering data.
+  </Accordion>
+</AccordionGroup>

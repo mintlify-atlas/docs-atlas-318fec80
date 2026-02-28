@@ -1,0 +1,309 @@
+---
+title: Contributing
+description: Guidelines for contributing to Hvilken Båt Er Det I Dag
+---
+
+## Getting started
+
+Thank you for your interest in contributing to Hvilken Båt Er Det I Dag! This guide will help you get started with contributing to the project.
+
+### Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+- **Node.js**: Version 18 or higher
+- **npm**: Comes with Node.js
+- **Git**: For version control
+
+### Setting up your development environment
+
+<Steps>
+
+<Step title="Fork and clone the repository">
+
+Fork the repository on GitHub, then clone your fork:
+
+```bash
+git clone https://github.com/YOUR_USERNAME/hvilken-baat-er-det-i-dag.git
+cd hvilken-baat-er-det-i-dag
+```
+
+</Step>
+
+<Step title="Install dependencies">
+
+Install the project dependencies:
+
+```bash
+npm install
+```
+
+</Step>
+
+<Step title="Start the development server">
+
+Run the development server to verify everything works:
+
+```bash
+npm run dev
+```
+
+Open your browser to `http://localhost:3000`.
+
+</Step>
+
+</Steps>
+
+## Code standards
+
+This project uses [Biome](https://biomejs.dev/) for linting and formatting to maintain consistent code quality.
+
+### Linting
+
+Check your code for issues:
+
+```bash
+npm run lint
+```
+
+Automatically fix issues where possible:
+
+```bash
+npm run lint:fix
+```
+
+### Formatting
+
+Format your code according to project standards:
+
+```bash
+npm run format
+```
+
+### Code style rules
+
+The project enforces several code style rules through Biome configuration:
+
+#### General rules
+
+- **No default exports**: Use named exports instead (except for config files)
+- **Single quotes**: Use single quotes for strings
+- **Semicolons**: Semicolons are optional (as needed)
+- **Line width**: Maximum 120 characters
+- **Indentation**: 2 spaces
+
+#### TypeScript rules
+
+- **Array types**: Use shorthand syntax (`string[]` instead of `Array<string>`)
+- **No unused imports**: Remove unused imports
+- **No unused variables**: Remove unused variables
+- **Explicit length checks**: Use explicit length checks instead of implicit boolean
+
+#### React rules
+
+- **Hooks at top level**: Use hooks only at the top level
+- **No nested ternaries**: Avoid nested ternary operators
+- **No console**: Avoid console statements (except `console.error`, `console.time`, `console.timeEnd`)
+
+### Example code style
+
+<CodeGroup>
+
+```typescript Good
+export const Button = ({ label }: { label: string }) => {
+  return <button>{label}</button>
+}
+```
+
+```typescript Bad
+export default function Button({ label }: { label: string }) {
+  return <button>{label}</button>;
+}
+```
+
+</CodeGroup>
+
+## Making changes
+
+### Creating a branch
+
+Create a new branch for your changes:
+
+```bash
+git checkout -b feature/your-feature-name
+```
+
+Use descriptive branch names:
+
+- `feature/add-boat-filter` for new features
+- `fix/date-display-bug` for bug fixes
+- `docs/update-readme` for documentation changes
+- `refactor/simplify-state-management` for refactoring
+
+### Commit messages
+
+Write clear, concise commit messages:
+
+<CodeGroup>
+
+```bash Good
+git commit -m "Add filter component for boat types"
+git commit -m "Fix date formatting in boat schedule"
+git commit -m "Update README with deployment instructions"
+```
+
+```bash Bad
+git commit -m "update"
+git commit -m "fix bug"
+git commit -m "changes"
+```
+
+</CodeGroup>
+
+### Before committing
+
+Before you commit your changes, make sure to:
+
+<Steps>
+
+<Step title="Run linting and formatting">
+
+```bash
+npm run lint:fix
+npm run format
+```
+
+</Step>
+
+<Step title="Run tests">
+
+```bash
+npm test -- --run
+```
+
+</Step>
+
+<Step title="Build the project">
+
+Verify that the project builds successfully:
+
+```bash
+npm run build
+```
+
+</Step>
+
+</Steps>
+
+## Submitting changes
+
+### Creating a pull request
+
+<Steps>
+
+<Step title="Push your changes">
+
+Push your branch to your fork:
+
+```bash
+git push origin feature/your-feature-name
+```
+
+</Step>
+
+<Step title="Open a pull request">
+
+Go to the original repository on GitHub and open a pull request from your branch.
+
+</Step>
+
+<Step title="Fill out the PR template">
+
+Provide a clear description of your changes:
+
+- **What**: Describe what you changed
+- **Why**: Explain why you made the change
+- **How**: Describe your approach
+- **Testing**: Explain how you tested your changes
+
+</Step>
+
+</Steps>
+
+### Pull request guidelines
+
+- Keep pull requests focused on a single feature or fix
+- Include tests for new functionality
+- Update documentation as needed
+- Ensure all checks pass (linting, tests, build)
+- Respond to review feedback promptly
+
+## Testing your changes
+
+Always test your changes thoroughly before submitting:
+
+### Manual testing
+
+1. Test in development mode (`npm run dev`)
+2. Test the production build (`npm run build && npm run preview`)
+3. Test on different browsers if possible
+4. Test edge cases and error conditions
+
+### Automated testing
+
+Write tests for your changes:
+
+```typescript
+import { describe, it, expect } from 'vitest'
+import { yourFunction } from './yourModule'
+
+describe('Your new feature', () => {
+  it('should work correctly', () => {
+    const result = yourFunction()
+    expect(result).toBeDefined()
+  })
+})
+```
+
+See the [Testing](/testing) page for more details.
+
+## Reporting issues
+
+If you find a bug or have a feature request:
+
+### Bug reports
+
+Include the following information:
+
+- **Description**: Clear description of the issue
+- **Steps to reproduce**: Detailed steps to reproduce the bug
+- **Expected behavior**: What you expected to happen
+- **Actual behavior**: What actually happened
+- **Environment**: Browser, OS, Node.js version
+- **Screenshots**: If applicable
+
+### Feature requests
+
+Include the following information:
+
+- **Description**: Clear description of the feature
+- **Use case**: Why this feature would be useful
+- **Proposed solution**: How you envision it working
+- **Alternatives**: Other approaches you've considered
+
+## Getting help
+
+If you need help or have questions:
+
+- Check the existing documentation
+- Search for similar issues on GitHub
+- Open a discussion on GitHub for questions
+- Reach out to the maintainers
+
+## Code of conduct
+
+Be respectful and considerate of others. We want to maintain a welcoming and inclusive community.
+
+## License
+
+By contributing to this project, you agree that your contributions will be licensed under the same license as the project.

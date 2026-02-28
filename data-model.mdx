@@ -1,0 +1,403 @@
+---
+title: Data model
+description: Learn about the ship data schema and API structure in Hvilken Båt Er Det I Dag
+---
+
+The app consumes a JSON API that provides cruise ship schedule data for Eidfjord, Norway. All data is validated at runtime using Zod schemas.
+
+## Ship type
+
+The `Ship` type is the core data structure representing a single cruise ship visit.
+
+**Location:** `src/state/Atoms.tsx:31`
+
+```tsx
+export type Ship = z.infer<typeof ship>
+```
+
+### Zod schema
+
+The Ship schema is defined using Zod for runtime validation:
+
+```tsx
+const ship = z
+  .object({
+    day: z.string(),
+    date: z.string(),
+    anchorTime: z.string(),
+    shipName: z.string(),
+    tonnage: z.number(),
+    length: z.number(),
+    depth: z.string().or(z.number()),
+    maxPassengers: z.number(),
+    company: z.string(),
+    agent: z.string(),
+    fromPort: z.string(),
+    toPort: z.string(),
+    nationality: z.string(),
+    dateOrdered: z.string(),
+    notes: z.string(),
+  })
+  .strict()
+```
+
+<Note>
+  The schema uses `.strict()` to ensure no additional properties are present in the data. Any extra fields will cause validation to fail.
+</Note>
+
+## Field reference
+
+<ResponseField name="day" type="string" required>
+  The day of the week in Norwegian (e.g., "mandag", "tirsdag")
+
+  **Example:** `"fredag"`
+</ResponseField>
+
+<ResponseField name="date" type="string" required>
+  The visit date in DD.MM.YYYY format
+
+  **Example:** `"15.06.2025"`
+
+  **Usage:** Used to filter ships by selected date
+</ResponseField>
+
+<ResponseField name="anchorTime" type="string" required>
+  The time the ship arrives/anchors in port
+
+  **Example:** `"08:00"`
+</ResponseField>
+
+<ResponseField name="shipName" type="string" required>
+  The name of the cruise ship
+
+  **Example:** `"Viking Ocean"`
+
+  **Usage:** Displayed in the daily message when only one ship is visiting
+</ResponseField>
+
+<ResponseField name="tonnage" type="number" required>
+  The ship's tonnage (weight)
+
+  **Example:** `47800`
+</ResponseField>
+
+<ResponseField name="length" type="number" required>
+  The ship's length in meters
+
+  **Example:** `228`
+</ResponseField>
+
+<ResponseField name="depth" type="string | number" required>
+  The ship's depth/draft - can be either a string or number
+
+  **Example:** `"7.5"` or `7.5`
+
+  <Note>
+    This field has a union type to handle inconsistent data formats from the API.
+  </Note>
+</ResponseField>
+
+<ResponseField name="maxPassengers" type="number" required>
+  Maximum passenger capacity
+
+  **Example:** `930`
+
+  **Usage:** Displayed in the ship card details
+</ResponseField>
+
+<ResponseField name="company" type="string" required>
+  The cruise line company operating the ship
+
+  **Example:** `"Viking Cruises"`
+</ResponseField>
+
+<ResponseField name="agent" type="string" required>
+  The local agent handling the ship's visit
+
+  **Example:** `"Cruise Norway"`
+</ResponseField>
+
+<ResponseField name="fromPort" type="string" required>
+  The departure port for this leg of the journey
+
+  **Example:** `"Bergen"`
+
+  **Usage:** Displayed as "Fra" field in ship card
+</ResponseField>
+
+<ResponseField name="toPort" type="string" required>
+  The destination port for this leg of the journey
+
+  **Example:** `"Flåm"`
+
+  **Usage:** Displayed as "Til" field in ship card
+</ResponseField>
+
+<ResponseField name="nationality" type="string" required>
+  The ship's flag/registration nationality
+
+  **Example:** `"Norwegian"`
+
+  **Usage:** Displayed as "Nasjonalitet" field, shows "---" if empty
+</ResponseField>
+
+<ResponseField name="dateOrdered" type="string" required>
+  The date the visit was scheduled/ordered
+
+  **Example:** `"01.01.2025"`
+</ResponseField>
+
+<ResponseField name="notes" type="string" required>
+  Additional notes about the visit
+
+  **Example:** `"ANKER - Ligger til ankers"`
+
+  **Special behavior:** If notes contain "ANKER" (case-insensitive), the ship is displayed with anchor icon and lollipop color theme
+</ResponseField>
+
+## API structure
+
+### Endpoint
+
+The app fetches data from a GitHub Gist:
+
+```
+https://gist.githubusercontent.com/steef-o/44bf82ba28a9ab09f681e8f7a3e471c7/raw/6f3b8650906e5a2c59d5faa2e0a8d0b7366a30f6/cruise-2025
+```
+
+### Response format
+
+The API returns a JSON array of ship objects:
+
+```json
+[
+  {
+    "day": "fredag",
+    "date": "15.06.2025",
+    "anchorTime": "08:00",
+    "shipName": "Viking Ocean",
+    "tonnage": 47800,
+    "length": 228,
+    "depth": "7.5",
+    "maxPassengers": 930,
+    "company": "Viking Cruises",
+    "agent": "Cruise Norway",
+    "fromPort": "Bergen",
+    "toPort": "Flåm",
+    "nationality": "Norwegian",
+    "dateOrdered": "01.01.2025",
+    "notes": "Regular visit"
+  },
+  {
+    "day": "fredag",
+    "date": "15.06.2025",
+    "anchorTime": "10:00",
+    "shipName": "Seabourn Quest",
+    "tonnage": 32000,
+    "length": 198,
+    "depth": 6.5,
+    "maxPassengers": 450,
+    "company": "Seabourn",
+    "agent": "Local Agent AS",
+    "fromPort": "Stavanger",
+    "toPort": "Bergen",
+    "nationality": "Bahamas",
+    "dateOrdered": "15.12.2024",
+    "notes": "ANKER - Ligger til ankers"
+  }
+]
+```
+
+## Data validation flow
+
+<Steps>
+  <Step title="Fetch data">
+    The `schedule` atom fetches JSON from the GitHub Gist
+
+    ```tsx
+    const res = await fetch(url).then((res) => res.json())
+    ```
+  </Step>
+
+  <Step title="Parse with Zod">
+    The response is validated against the `list` schema (array of ships)
+
+    ```tsx
+    const list = z.array(ship)
+    return list.parse(res)
+    ```
+
+    If validation fails, an error is thrown and caught by React Query
+  </Step>
+
+  <Step title="Type-safe consumption">
+    Components receive fully typed `Ship[]` data
+
+    ```tsx
+    const [shipList] = useAtom(selectedShipList)
+    // shipList is Ship[] - TypeScript knows all fields
+    ```
+  </Step>
+</Steps>
+
+## Data transformations
+
+### Date filtering
+
+Ships are filtered by comparing the `date` field with the selected day:
+
+```tsx
+const selectedShipList = atom((get) => {
+  const scheduleResult = get(schedule)
+  
+  if (scheduleResult.data && Array.isArray(scheduleResult.data)) {
+    return scheduleResult.data.filter(
+      (ship: Ship) => ship.date === get(selectedDay).format('DD.MM.YYYY')
+    )
+  }
+  
+  return []
+})
+```
+
+**Format conversion:**
+- `selectedDay` stores a Day.js object
+- Formatted to `DD.MM.YYYY` to match the API's date format
+- Case-sensitive exact match
+
+### Anchor detection
+
+Ships are identified as anchored by checking the `notes` field:
+
+```tsx
+const anchoredShip = ship.notes.toUpperCase().includes('ANKER')
+```
+
+**Behavior:**
+- Case-insensitive check (converts to uppercase)
+- Substring match ("ANKER" anywhere in notes)
+- Affects ship card styling (color and icon)
+
+### Display formatting
+
+Several fields have special formatting when displayed:
+
+<Tabs>
+  <Tab title="Empty values">
+    Some fields show fallback text when empty:
+
+    ```tsx
+    <Field label="Nasjonalitet" value={ship.nationality || '---'} />
+    <Field label="Maks Passasjerer" value={ship.maxPassengers?.toString() ?? '---'} />
+    <Field label="Notater" value={ship.notes || '---'} />
+    ```
+  </Tab>
+
+  <Tab title="Number to string">
+    Numeric fields are converted to strings for display:
+
+    ```tsx
+    value={ship.maxPassengers?.toString() ?? '---'}
+    ```
+  </Tab>
+
+  <Tab title="Day capitalization">
+    The day field uses CSS for capitalization:
+
+    ```tsx
+    <Field label="Dag" value={ship.day} styles="capitalize px-0" />
+    ```
+  </Tab>
+
+  <Tab title="Ship name uppercase">
+    Ship names are displayed in uppercase:
+
+    ```tsx
+    <h2 className="font-bold text-2xl uppercase">
+      {ship.shipName}
+    </h2>
+    ```
+  </Tab>
+</Tabs>
+
+## Type exports
+
+The `Ship` type is exported from the atoms file for use throughout the app:
+
+```tsx
+// src/state/Atoms.tsx
+export type Ship = z.infer<typeof ship>
+
+// Usage in components
+import type { Ship } from '~/state/Atoms'
+
+interface ShipListItemProps {
+  ship: Ship
+  anchoredShip?: boolean
+}
+```
+
+## Error handling
+
+<AccordionGroup>
+  <Accordion title="Validation errors">
+    If the API returns data that doesn't match the schema, Zod throws a validation error:
+
+    ```tsx
+    try {
+      return list.parse(res)
+    } catch (error) {
+      // ZodError with details about which fields failed validation
+    }
+    ```
+
+    React Query catches this error and exposes it via the `schedule` atom's error state.
+  </Accordion>
+
+  <Accordion title="Network errors">
+    Network failures are handled by React Query:
+
+    ```tsx
+    const [scheduleResult] = useAtom(schedule)
+    
+    if (scheduleResult.error) {
+      // Handle network error
+    }
+    ```
+
+    The app uses Suspense, so these errors are caught by an error boundary.
+  </Accordion>
+
+  <Accordion title="Missing data">
+    The `selectedShipList` atom safely handles missing data:
+
+    ```tsx
+    if (scheduleResult.data && Array.isArray(scheduleResult.data)) {
+      return scheduleResult.data.filter(...)
+    }
+    return [] // Safe fallback
+    ```
+
+    This prevents runtime errors when data hasn't loaded yet.
+  </Accordion>
+</AccordionGroup>
+
+## Best practices
+
+<CardGroup cols={2}>
+  <Card title="Always validate external data" icon="shield-check">
+    Use Zod schemas to validate all data from external sources before it enters your application state.
+  </Card>
+
+  <Card title="Use strict schemas" icon="lock">
+    The `.strict()` modifier ensures no unexpected fields are present, preventing subtle bugs.
+  </Card>
+
+  <Card title="Handle union types" icon="code-branch">
+    Fields like `depth` that can be multiple types should use Zod's union types: `z.string().or(z.number())`
+  </Card>
+
+  <Card title="Provide fallbacks" icon="circle-exclamation">
+    Always provide fallback values for optional or potentially empty fields to prevent rendering errors.
+  </Card>
+</CardGroup>

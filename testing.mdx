@@ -1,0 +1,286 @@
+---
+title: Testing
+description: Learn how to write and run tests for Hvilken Båt Er Det I Dag
+---
+
+## Testing setup
+
+The project uses [Vitest](https://vitest.dev/) as its testing framework, which provides a fast and modern testing experience with native ESM support.
+
+### Test configuration
+
+Vitest is configured in `vitest.config.ts` with minimal setup:
+
+```typescript vitest.config.ts
+import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite'
+import tsconfigPaths from 'vite-tsconfig-paths'
+
+export default defineConfig({
+  plugins: [react(), tsconfigPaths()],
+})
+```
+
+The configuration inherits from Vite's settings and includes:
+- React plugin for component testing support
+- TypeScript path aliases resolution
+- ESM native support
+
+## Running tests
+
+You can run tests using the test script:
+
+```bash
+npm test
+```
+
+This executes `vitest src`, which runs all tests in the `src` directory.
+
+### Test commands
+
+<CodeGroup>
+
+```bash Run tests once
+npm test -- --run
+```
+
+```bash Watch mode
+npm test
+```
+
+```bash UI mode
+npm test -- --ui
+```
+
+```bash Coverage report
+npm test -- --coverage
+```
+
+</CodeGroup>
+
+### Test modes
+
+- **Watch mode** (default): Automatically reruns tests when files change
+- **Run mode**: Runs tests once and exits
+- **UI mode**: Opens an interactive browser-based UI for debugging tests
+
+## Writing tests
+
+### Test file structure
+
+Create test files alongside your source files with the `.test.ts` or `.test.tsx` extension:
+
+```
+src/
+├── components/
+│   ├── Button.tsx
+│   └── Button.test.tsx
+└── utils/
+    ├── helpers.ts
+    └── helpers.test.ts
+```
+
+### Basic test example
+
+Here's a simple unit test structure:
+
+```typescript example.test.ts
+import { describe, it, expect } from 'vitest'
+
+describe('Example function', () => {
+  it('should return the correct value', () => {
+    const result = 2 + 2
+    expect(result).toBe(4)
+  })
+})
+```
+
+### Component testing
+
+For React components, you can use testing libraries like React Testing Library:
+
+```typescript Button.test.tsx
+import { render, screen } from '@testing-library/react'
+import { describe, it, expect } from 'vitest'
+import { Button } from './Button'
+
+describe('Button', () => {
+  it('should render with correct text', () => {
+    render(<Button>Click me</Button>)
+    expect(screen.getByText('Click me')).toBeDefined()
+  })
+})
+```
+
+<Note>
+You'll need to install `@testing-library/react` and `@testing-library/user-event` if you want to test React components.
+</Note>
+
+## Test organization
+
+### Using describe blocks
+
+Group related tests using `describe` blocks:
+
+```typescript
+describe('User authentication', () => {
+  describe('login', () => {
+    it('should authenticate valid credentials', () => {
+      // test implementation
+    })
+
+    it('should reject invalid credentials', () => {
+      // test implementation
+    })
+  })
+
+  describe('logout', () => {
+    it('should clear user session', () => {
+      // test implementation
+    })
+  })
+})
+```
+
+### Setup and teardown
+
+Use `beforeEach` and `afterEach` for test setup:
+
+```typescript
+import { describe, it, beforeEach, afterEach, expect } from 'vitest'
+
+describe('Database operations', () => {
+  beforeEach(() => {
+    // Setup before each test
+  })
+
+  afterEach(() => {
+    // Cleanup after each test
+  })
+
+  it('should save data', () => {
+    // test implementation
+  })
+})
+```
+
+## Testing best practices
+
+### Write descriptive test names
+
+Use clear, descriptive names that explain what the test validates:
+
+<CodeGroup>
+
+```typescript Good
+it('should display error message when email is invalid', () => {
+  // test implementation
+})
+```
+
+```typescript Bad
+it('test email', () => {
+  // test implementation
+})
+```
+
+</CodeGroup>
+
+### Test one thing at a time
+
+Each test should verify a single behavior:
+
+```typescript
+// Good: Separate tests for different behaviors
+it('should validate email format', () => {
+  expect(validateEmail('test@example.com')).toBe(true)
+})
+
+it('should reject emails without @', () => {
+  expect(validateEmail('testexample.com')).toBe(false)
+})
+```
+
+### Use meaningful assertions
+
+Choose the most specific assertion for your test:
+
+<CodeGroup>
+
+```typescript Specific
+expect(result).toBe(42)
+expect(array).toHaveLength(3)
+expect(object).toHaveProperty('name')
+```
+
+```typescript Generic
+expect(result === 42).toBeTruthy()
+expect(array.length === 3).toBeTruthy()
+expect('name' in object).toBeTruthy()
+```
+
+</CodeGroup>
+
+## Debugging tests
+
+### Using console.log
+
+You can use `console.log` to debug test output:
+
+```typescript
+it('should process data correctly', () => {
+  const data = processData(input)
+  console.log('Processed data:', data)
+  expect(data).toBeDefined()
+})
+```
+
+### Running specific tests
+
+Run tests matching a pattern:
+
+```bash
+npm test -- --grep "Button"
+```
+
+Or use `.only` to run a single test:
+
+```typescript
+it.only('should run only this test', () => {
+  // test implementation
+})
+```
+
+<Warning>
+Remember to remove `.only` before committing your code.
+</Warning>
+
+## Coverage reports
+
+Generate test coverage reports to identify untested code:
+
+<Steps>
+
+<Step title="Install coverage package">
+
+```bash
+npm install -D @vitest/coverage-v8
+```
+
+</Step>
+
+<Step title="Run tests with coverage">
+
+```bash
+npm test -- --coverage
+```
+
+</Step>
+
+<Step title="View the coverage report">
+
+Open `coverage/index.html` in your browser to see a detailed coverage report.
+
+</Step>
+
+</Steps>

@@ -1,0 +1,103 @@
+---
+title: Live demo
+description: Experience Hvilken Båt Er Det I Dag in action with the live demo deployment
+---
+
+## Try it yourself
+
+The app is deployed on Vercel and available for you to explore:
+
+<Card
+  title="hvilken-baat-er-det-i-dag.vercel.app"
+  icon="globe"
+  href="https://hvilken-baat-er-det-i-dag.vercel.app/"
+>
+  Open the live demo in a new tab
+</Card>
+
+## What to try
+
+When you visit the demo, here are some features to explore:
+
+### Date navigation
+
+You can navigate through the cruise ship schedule in multiple ways:
+
+- **Click the arrow buttons** - Use the left and right caret buttons to move between days
+- **Use keyboard shortcuts** - Press the left (←) and right (→) arrow keys on your keyboard
+- **Pick a specific date** - Click on the date field to open a calendar picker
+
+<Info>
+  The keyboard shortcuts work globally on the page, so you can quickly browse through the schedule without clicking.
+</Info>
+
+### Ship information display
+
+Each cruise ship visiting Eidfjord is displayed with comprehensive details:
+
+- **Ship name and date** - Prominently displayed at the top of each card
+- **Anchor status** - Ships with "anker" (anchor) in their notes show a visual anchor icon
+- **Route information** - See where each ship is coming from (Fra) and going to (Til)
+- **Vessel specifications** - Tonnage, length, and maximum passenger capacity
+- **Schedule details** - Anchor time and any special notes
+
+<Note>
+  When a ship is anchored (rather than docked), the anchor icon and text turn pink (`lollipop` color) to draw attention.
+</Note>
+
+### Daily message
+
+At the top of the page, you'll see a dynamic message that changes based on how many ships are visiting:
+
+- **No ships** - "Det er ingen båter i Eidfjord i dag" (There are no boats in Eidfjord today)
+- **One ship** - "I dag er det [ship name] som er på besøk i Eidfjord" (Today it is [ship name] visiting Eidfjord)
+- **Two ships** - "I dag er det to båtere på besøk i Eidfjord" (Today there are two boats visiting Eidfjord)
+
+### Design details
+
+The app showcases a modern glassmorphism design:
+
+- **Gradient background** - Sky blue gradient from `sky-200` to `cyan-200`
+- **Frosted glass cards** - Ship information cards use `backdrop-blur-md` with semi-transparent backgrounds
+- **Decorative punch holes** - Each card has circular "holes" at the top and bottom, giving it a ticket-like appearance
+- **Responsive layout** - The design adapts seamlessly between mobile and desktop views
+
+## Technical details
+
+### Data source
+
+The schedule data is fetched from a GitHub Gist that contains the 2025 cruise season schedule:
+
+```typescript
+const res = await fetch(
+  'https://gist.githubusercontent.com/steef-o/44bf82ba28a9ab09f681e8f7a3e471c7/raw/6f3b8650906e5a2c59d5faa2e0a8d0b7366a30f6/cruise-2025'
+).then((res) => res.json())
+```
+
+The data is validated at runtime using Zod schemas to ensure type safety.
+
+### Deployment
+
+The app is deployed using Vercel's platform, which provides:
+
+- **Instant deployments** - Every push to the main branch triggers a new deployment
+- **Global CDN** - Assets are served from edge locations worldwide
+- **Automatic HTTPS** - Secure connections by default
+- **Preview deployments** - Pull requests get their own preview URLs
+
+<Info>
+  The Vite build process optimizes the app for production, including code splitting and asset optimization.
+</Info>
+
+## Feedback and contributions
+
+This demo represents a working implementation of the cruise ship schedule viewer. If you encounter any issues or have suggestions:
+
+- Check the ship data to see the full 2025 season schedule
+- Test the keyboard navigation for smooth date browsing
+- Try it on different devices to experience the responsive design
+- Notice how the UI handles days with zero, one, or multiple ships
+
+<Card title="View the source code" icon="github" href="https://github.com/steef-o/hvilken-baat-er-det-i-dag">
+  Explore the implementation details in the GitHub repository
+</Card>

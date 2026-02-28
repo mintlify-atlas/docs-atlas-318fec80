@@ -1,0 +1,164 @@
+---
+title: Building and deployment
+description: Learn how to build and deploy Hvilken Båt Er Det I Dag
+---
+
+## Development server
+
+You can start the development server to work on the application locally:
+
+```bash
+npm run dev
+```
+
+The development server runs on port 3000 by default and includes:
+- Hot module replacement (HMR) for instant updates
+- Jotai debug labels and React Refresh for state management
+- TypeScript path aliases support via `vite-tsconfig-paths`
+
+## Build configuration
+
+The project uses Vite as its build tool with the following configuration:
+
+### Vite plugins
+
+The build is configured with two essential plugins in `vite.config.ts:9`:
+
+<CodeGroup>
+
+```typescript vite.config.ts
+import react from '@vitejs/plugin-react'
+import jotaiDebugLabel from 'jotai/babel/plugin-debug-label'
+import jotaiReactRefresh from 'jotai/babel/plugin-react-refresh'
+import { defineConfig } from 'vite'
+import tsconfigPaths from 'vite-tsconfig-paths'
+
+export default defineConfig({
+  plugins: [react({ babel: { plugins: [jotaiDebugLabel, jotaiReactRefresh] } }), tsconfigPaths()],
+  server: {
+    port: 3000,
+  },
+})
+```
+
+</CodeGroup>
+
+- **@vitejs/plugin-react**: Enables React Fast Refresh and includes Jotai-specific Babel plugins for enhanced debugging
+- **vite-tsconfig-paths**: Resolves TypeScript path aliases (e.g., `~/components`) based on `tsconfig.json`
+
+### TypeScript configuration
+
+The project uses strict TypeScript settings with path aliases configured in `tsconfig.json:25-27`:
+
+```json tsconfig.json
+"baseUrl": ".",
+"paths": {
+  "~/*": ["src/*"]
+}
+```
+
+This allows you to import modules using the `~` alias instead of relative paths.
+
+## Building for production
+
+<Steps>
+
+<Step title="Run the build command">
+
+Execute the build script to create optimized production assets:
+
+```bash
+npm run build
+```
+
+This runs `vite build`, which:
+- Compiles TypeScript to JavaScript
+- Bundles and optimizes all assets
+- Outputs to the `dist` directory
+- Applies tree-shaking and minification
+
+</Step>
+
+<Step title="Preview the production build">
+
+You can preview the production build locally before deploying:
+
+```bash
+npm run preview
+```
+
+This serves the contents of the `dist` directory.
+
+</Step>
+
+</Steps>
+
+## Deployment
+
+The application is deployed to Vercel. The deployment process is automatic:
+
+### Automatic deployments
+
+- **Production**: Pushes to the `main` branch automatically deploy to production
+- **Preview**: Pull requests generate preview deployments
+
+### Manual deployment
+
+If you need to deploy manually:
+
+<Steps>
+
+<Step title="Install Vercel CLI">
+
+```bash
+npm install -g vercel
+```
+
+</Step>
+
+<Step title="Build the project">
+
+```bash
+npm run build
+```
+
+</Step>
+
+<Step title="Deploy to Vercel">
+
+```bash
+vercel --prod
+```
+
+</Step>
+
+</Steps>
+
+### Build output
+
+The build process generates static assets in the `dist` directory:
+
+- **index.html**: Main HTML file
+- **assets/**: JavaScript, CSS, and other bundled assets
+- All files are optimized and ready for CDN deployment
+
+## Environment variables
+
+If your application requires environment variables:
+
+1. Create a `.env.local` file in the project root
+2. Add variables prefixed with `VITE_`:
+
+```bash .env.local
+VITE_API_URL=https://api.example.com
+```
+
+3. Access them in your code:
+
+```typescript
+const apiUrl = import.meta.env.VITE_API_URL
+```
+
+<Note>
+Environment variables are embedded at build time. You need to rebuild after changing them.
+</Note>

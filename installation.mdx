@@ -1,0 +1,110 @@
+---
+title: Installation
+description: Install and set up Hvilken Båt Er Det I Dag
+---
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed on your system:
+
+- **Node.js** 18.x or later
+- **npm**, **yarn**, or **pnpm** package manager
+- **Git** for version control
+
+## Clone the repository
+
+Start by cloning the project repository to your local machine:
+
+<CodeGroup>
+```bash npm
+git clone https://github.com/yourusername/hvilken-baat-er-det-i-dag.git
+cd hvilken-baat-er-det-i-dag
+```
+
+```bash yarn
+git clone https://github.com/yourusername/hvilken-baat-er-det-i-dag.git
+cd hvilken-baat-er-det-i-dag
+```
+
+```bash pnpm
+git clone https://github.com/yourusername/hvilken-baat-er-det-i-dag.git
+cd hvilken-baat-er-det-i-dag
+```
+</CodeGroup>
+
+## Install dependencies
+
+Install all required dependencies using your preferred package manager:
+
+<CodeGroup>
+```bash npm
+npm install
+```
+
+```bash yarn
+yarn install
+```
+
+```bash pnpm
+pnpm install
+```
+</CodeGroup>
+
+This will install the following key dependencies:
+
+- **React 19.1.0** - UI library
+- **Vite 6.3.5** - Build tool and development server
+- **TypeScript 5.8.3** - Type safety
+- **Tailwind CSS 3.4.6** - Utility-first CSS framework
+- **Jotai 2.12.4** - State management
+- **Biome 1.9.4** - Linting and formatting
+- **Vitest 3.1.3** - Testing framework
+
+## Project structure
+
+After installation, your project structure will look like this:
+
+```plaintext
+hvilken-baat-er-det-i-dag/
+├── src/
+│   ├── components/     # React components
+│   ├── state/          # Jotai state management
+│   ├── assets/         # Static assets
+│   ├── App.tsx         # Main app component
+│   ├── main.tsx        # Application entry point
+│   └── index.css       # Global styles
+├── biome.json          # Biome configuration
+├── vite.config.ts      # Vite configuration
+├── vitest.config.ts    # Vitest configuration
+├── tailwind.config.js  # Tailwind configuration
+├── tsconfig.json       # TypeScript configuration
+└── package.json        # Project dependencies
+```
+
+## Verify installation
+
+Verify that everything is set up correctly by running the development server:
+
+<CodeGroup>
+```bash npm
+npm run dev
+```
+
+```bash yarn
+yarn dev
+```
+
+```bash pnpm
+pnpm dev
+```
+</CodeGroup>
+
+The application should start on `http://localhost:3000`. Open your browser and navigate to this URL to see the app running.
+
+## Next steps
+
+Now that you have installed the project, you can:
+
+- Learn about [local development](/development) workflows
+- Explore the codebase structure
+- Start building new features

@@ -1,0 +1,165 @@
+---
+title: Introduction
+description: Welcome to Hvilken Båt Er Det I Dag - a modern cruise ship schedule viewer for Eidfjord, Norway
+---
+
+## Welcome aboard
+
+Hvilken Båt Er Det I Dag ("Which boat is it today") is a React application that displays the daily cruise ship schedule for Eidfjord, Norway. Built with modern web technologies, it provides an elegant and interactive way to track visiting cruise ships throughout the summer season.
+
+<Note>
+  The app fetches real-time schedule data from a remote source and displays detailed information about each vessel, including tonnage, passenger capacity, ports of call, and anchor status.
+</Note>
+
+## Key features
+
+<CardGroup cols={2}>
+  <Card
+    title="Interactive date navigation"
+    icon="calendar-days"
+  >
+    Navigate between dates using arrow buttons or keyboard shortcuts (← →) for quick browsing
+  </Card>
+  <Card
+    title="Real-time ship schedules"
+    icon="ship"
+  >
+    View detailed cruise ship information fetched from a live data source
+  </Card>
+  <Card
+    title="Glassmorphism design"
+    icon="palette"
+  >
+    Modern UI with backdrop blur effects and responsive layout built with Tailwind CSS
+  </Card>
+  <Card
+    title="Anchor status indicator"
+    icon="anchor"
+  >
+    Visual indicators show when ships are anchored versus docked at port
+  </Card>
+</CardGroup>
+
+## Technology stack
+
+The application is built with a modern React stack that prioritizes performance and developer experience:
+
+- **React 19** - Latest React with concurrent features
+- **Jotai** - Atomic state management for predictable data flow
+- **TanStack Query** - Server state management via `jotai-tanstack-query`
+- **Tailwind CSS** - Utility-first styling with custom theme
+- **Day.js** - Lightweight date manipulation
+- **Zod** - Runtime type validation for API data
+- **Vite** - Fast build tooling and HMR
+
+<Info>
+  The app uses Jotai atoms to manage state, combining local date selection with remote schedule data through derived atoms.
+</Info>
+
+## Quick start
+
+Get started by exploring the live demo or diving into the architecture:
+
+<CardGroup cols={2}>
+  <Card
+    title="Try the demo"
+    icon="rocket"
+    href="/demo"
+  >
+    Experience the app live at hvilken-baat-er-det-i-dag.vercel.app
+  </Card>
+  <Card
+    title="Architecture"
+    icon="diagram-project"
+    href="/components"
+  >
+    Understand how the app is structured and how data flows
+  </Card>
+  <Card
+    title="State management"
+    icon="atom"
+    href="/state-management"
+  >
+    Learn about Jotai atoms and how they power the app
+  </Card>
+  <Card
+    title="Data model"
+    icon="database"
+    href="/data-model"
+  >
+    Explore the ship data structure and validation
+  </Card>
+</CardGroup>
+
+## What makes this app special
+
+Hvilken Båt Er Det I Dag demonstrates several modern React patterns:
+
+**Type-safe data fetching** - The app uses Zod schemas to validate API responses at runtime, ensuring type safety from the network boundary:
+
+```typescript
+const ship = z
+  .object({
+    day: z.string(),
+    date: z.string(),
+    anchorTime: z.string(),
+    shipName: z.string(),
+    tonnage: z.number(),
+    length: z.number(),
+    maxPassengers: z.number(),
+    nationality: z.string(),
+    // ... more fields
+  })
+  .strict()
+
+export type Ship = z.infer<typeof ship>
+```
+
+**Atomic state composition** - State is split into focused atoms that derive from each other, creating a clear dependency graph:
+
+```typescript
+// Base atom for selected date
+export const selectedDay = atom<Dayjs>(dayjs())
+
+// Derived atom that filters ships by selected date
+export const selectedShipList = atom((get) => {
+  const scheduleResult = get(schedule)
+  if (scheduleResult.data && Array.isArray(scheduleResult.data)) {
+    return scheduleResult.data.filter(
+      (ship: Ship) => ship.date === get(selectedDay).format('DD.MM.YYYY')
+    )
+  }
+  return []
+})
+```
+
+**Keyboard-driven UX** - Arrow key navigation is implemented at the component level with proper cleanup:
+
+```typescript
+const handleKeyDown = useCallback(
+  (e: KeyboardEvent) => {
+    switch (e.key) {
+      case 'ArrowLeft':
+        subtractDay()
+        break
+      case 'ArrowRight':
+        addDay()
+        break
+    }
+  },
+  [addDay, subtractDay]
+)
+
+useEffect(() => {
+  window.addEventListener('keydown', handleKeyDown)
+  return () => {
+    window.removeEventListener('keydown', handleKeyDown)
+  }
+}, [handleKeyDown])
+```
+
+## Next steps
+
+<Card title="Explore the demo" icon="play" href="/demo">
+  Visit the live application to see all features in action
+</Card>

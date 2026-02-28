@@ -1,0 +1,353 @@
+---
+title: Component architecture
+description: Learn about the component structure and breakdown of Hvilken Båt Er Det I Dag
+---
+
+The app is built with a simple, functional component architecture using React and Jotai for state management. All components are functional components using hooks.
+
+## Component hierarchy
+
+The component tree follows this structure:
+
+```plaintext
+App
+├── Toolbar
+├── DailyMessage
+├── Illustration
+└── ShipList
+    └── ShipListItem
+        └── Field
+```
+
+## Core components
+
+<Tabs>
+  <Tab title="App">
+    The root component that orchestrates the entire application. It wraps all child components in a `Suspense` boundary for async data loading.
+
+    **Location:** `src/App.tsx:8`
+
+    **Props:** None
+
+    **Key features:**
+    - Provides loading fallback during data fetch
+    - Establishes the visual layout and gradient background
+    - Renders components in logical order: toolbar → message → illustration → ship list
+
+    ```tsx
+    export const App = () => (
+      <Suspense fallback={<div className="bg-base">Loading...</div>}>
+        <div className="min-h-screen bg-gradient-to-br from-sky-200 via-sky-300 to-cyan-200 pb-20">
+          <header className="text-center font-medium px-4 pt-12">
+            <h1 className="text-white text-4xl uppercase max-w-[240px] mx-auto">Hvilken Båt er det i dag</h1>
+          </header>
+          <main className="mx-auto mb-20 max-w-project px-4">
+            <Toolbar />
+            <DailyMessage />
+            <Illustration />
+            <ShipList />
+          </main>
+        </div>
+      </Suspense>
+    )
+    ```
+  </Tab>
+
+  <Tab title="Toolbar">
+    Provides date navigation controls for browsing the ship schedule. Supports both click and keyboard navigation.
+
+    **Location:** `src/components/Toolbar.tsx:9`
+
+    **Props:** None
+
+    **State:**
+    - Reads and writes to `selectedDay` atom
+
+    **Key features:**
+    - Previous/next day buttons using Phosphor icons
+    - Native date picker input
+    - Keyboard shortcuts (arrow left/right)
+    - Bidirectional data flow with `selectedDay` atom
+
+    ```tsx
+    export const Toolbar = () => {
+      const [selectedDate, setSelectedDate] = useAtom(selectedDay)
+
+      const addDay = useCallback(() => {
+        setSelectedDate((prevState) => prevState.add(1, 'day'))
+      }, [setSelectedDate])
+
+      const subtractDay = useCallback(() => {
+        setSelectedDate((prevState) => prevState.subtract(1, 'day'))
+      }, [setSelectedDate])
+
+      // ... keyboard event handling
+
+      return (
+        <div className="mt-8 flex justify-center w-full text-midnight-blue">
+          <button type="button" onClick={subtractDay}>
+            <CaretLeft size="2rem" />
+          </button>
+          <input
+            type="date"
+            id="calendar"
+            onChange={handleDateChange}
+            value={selectedDate.format('YYYY-MM-DD')}
+            className="bg-transparent text-xl font-medium px-9 max-w-[14rem] cursor-pointer"
+          />
+          <button type="button" onClick={addDay}>
+            <CaretRight size="2rem" />
+          </button>
+        </div>
+      )
+    }
+    ```
+  </Tab>
+
+  <Tab title="DailyMessage">
+    Displays a dynamic message based on how many ships are visiting on the selected day.
+
+    **Location:** `src/components/DailyMessage.tsx:5`
+
+    **Props:** None
+
+    **State:**
+    - Reads from `dailyMessage` atom (derived atom)
+
+    **Message variants:**
+    - 0 ships: "Det er **ingen** båter i Eidfjord i dag"
+    - 1 ship: "I dag er det **[ship name]** som er på besøk i Eidfjord"
+    - 2 ships: "I dag er det **to** båtere på besøk i Eidfjord"
+
+    ```tsx
+    export const DailyMessage = () => {
+      const [message] = useAtom(dailyMessage)
+
+      return (
+        <div className="mt-8 min-h-[3.5rem] text-center text-midnight-blue text-md max-w-[14rem] mx-auto">
+          {message}
+        </div>
+      )
+    }
+    ```
+  </Tab>
+
+  <Tab title="Illustration">
+    Renders decorative visuals that change based on the number of ships visiting.
+
+    **Location:** `src/components/Illustration.tsx:7`
+
+    **Props:** None
+
+    **State:**
+    - Reads from `selectedShipList` atom
+
+    **Visual states:**
+    - **0 ships:** Shows a buoy SVG illustration
+    - **1 ship:** Shows a single centered boat icon (8rem, ocean-blue)
+    - **2 ships:** Shows two boat icons (6rem lollipop, 8rem ocean-blue)
+    - Always displays a wave pattern at the bottom
+
+    ```tsx
+    export const Illustration = () => {
+      const [shipList] = useAtom(selectedShipList)
+      return (
+        <div className="mt-14 flex h-full min-h-[20rem]">
+          <div className="w-full self-end">
+            {/* Two Ships*/}
+            {shipList.length === 2 && (
+              <>
+                <Boat size="6rem" className="ml-[20%] text-lollipop" />
+                <Boat size="8rem" className="ml-[60%] text-ocean-blue" />
+              </>
+            )}
+            {/* One Ship*/}
+            {shipList.length === 1 && <Boat size="8rem" className="mx-auto text-ocean-blue" />}
+            {/* No Ship(s)*/}
+            {shipList.length === 0 && <img src={Buoy} alt="Buoy" className="mx-auto mt-32 w-2/12 sm:w-1/12" />}
+            <div className="flex justify-center">
+              {/* Wave icons */}
+            </div>
+          </div>
+        </div>
+      )
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Ship list components
+
+<AccordionGroup>
+  <Accordion title="ShipList">
+    Container component that renders the list of ships for the selected date.
+
+    **Location:** `src/components/shipList/ShipList.tsx:6`
+
+    **Props:** None
+
+    **State:**
+    - Reads from `selectedShipList` atom (filtered by selected date)
+
+    **Behavior:**
+    - Maps over the ship array and renders a `ShipListItem` for each
+    - Determines if a ship is anchored based on notes containing "ANKER"
+    - Uses ship name and index as the key for list rendering
+
+    ```tsx
+    export const ShipList = () => {
+      const [shipList] = useAtom(selectedShipList)
+
+      return (
+        <div className="relative mx-auto max-w-[768px]">
+          {shipList.map((ship, index) => (
+            <ShipListItem
+              key={`${ship.shipName}-${index}`}
+              ship={ship}
+              anchoredShip={ship.notes.toUpperCase().includes('ANKER')}
+            />
+          ))}
+        </div>
+      )
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="ShipListItem">
+    Displays detailed information about a single ship in a ticket-style card design.
+
+    **Location:** `src/components/shipList/ShipListItem.tsx:13`
+
+    <ParamField path="ship" type="Ship" required>
+      The ship object containing all details (see [data model](/data-model) for schema)
+    </ParamField>
+
+    <ParamField path="anchoredShip" type="boolean" default="false">
+      Whether the ship is anchored (affects styling - uses lollipop color instead of ocean-blue)
+    </ParamField>
+
+    **Key features:**
+    - Glassmorphism card design with decorative holes
+    - Conditional anchor icon display
+    - Color theming based on anchored status
+    - Rotated barcode section on desktop
+    - Responsive grid layout for ship details
+
+    ```tsx
+    interface ShipListItemProps {
+      ship: Ship
+      anchoredShip?: boolean
+    }
+
+    export const ShipListItem = ({ ship, anchoredShip = false }: ShipListItemProps) => (
+      <div className="relative">
+        <div className="my-4 flex flex-col md:flex-row bg-white/10 backdrop-blur-md border border-white/20 shadow-xl rounded-[20px] p-6 md:my-10 max-w-full overflow-hidden isolate">
+          {/* Decorative holes */}
+          <span className="absolute top-[-20px] left-[65%] w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 z-10" />
+          <span className="absolute bottom-[-20px] left-[65%] w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 z-10" />
+          
+          <div className="w-full pt-1 md:w-9/12">
+            <div className="flex">
+              {anchoredShip && <Anchor size="2.5rem" className="mt-5 ml-2" />}
+              <div className="px-4 py-4 md:px-2">
+                <h2 className={`font-bold text-2xl uppercase ${anchoredShip ? 'text-lollipop' : 'text-ocean-blue'}`}>
+                  {ship.shipName}
+                </h2>
+                <h3 className={`font-bold ${anchoredShip ? 'text-lollipop' : 'text-ocean-blue'}`}>{ship.date}</h3>
+              </div>
+            </div>
+            <div className="ml-2 grid grid-cols-2 md:ml-10">
+              <Field label="Fra" value={ship.fromPort} />
+              <Field label="Til" value={ship.toPort} />
+              <Field label="Nasjonalitet" value={ship.nationality || '---'} />
+              <Field label="Maks Passasjerer" value={ship.maxPassengers?.toString() ?? '---'} />
+              <Field label="Ankertid" value={ship.anchorTime} />
+              <Field label="Notater" value={ship.notes || '---'} />
+            </div>
+          </div>
+          {/* Rotated barcode section */}
+        </div>
+      </div>
+    )
+    ```
+  </Accordion>
+
+  <Accordion title="Field">
+    A simple label-value display component used throughout ship cards.
+
+    **Location:** `src/components/shipList/Field.tsx:7`
+
+    <ParamField path="label" type="string" required>
+      The field label (displayed in uppercase monospace)
+    </ParamField>
+
+    <ParamField path="value" type="string" required>
+      The field value (displayed in bold)
+    </ParamField>
+
+    <ParamField path="styles" type="string">
+      Optional additional Tailwind classes to apply
+    </ParamField>
+
+    ```tsx
+    interface FieldProps {
+      label: string
+      value: string
+      styles?: string
+    }
+
+    export const Field = ({ label, value, styles }: FieldProps) => (
+      <div className={`px-4 py-2 ${styles}`}>
+        <p className="font-mono uppercase">{label}</p>
+        <h3 className="font-bold text-lg">{value}</h3>
+      </div>
+    )
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Design patterns
+
+### State consumption
+
+All components consume state through Jotai's `useAtom` hook. No props are passed for data - components read directly from atoms:
+
+```tsx
+import { useAtom } from 'jotai'
+import { selectedShipList } from '~/state/Atoms'
+
+export const ShipList = () => {
+  const [shipList] = useAtom(selectedShipList)
+  // ...
+}
+```
+
+### Suspense boundaries
+
+Async data loading is handled at the root level with React Suspense, providing a clean loading state:
+
+```tsx
+<Suspense fallback={<div className="bg-base">Loading...</div>}>
+  {/* App content */}
+</Suspense>
+```
+
+### Responsive design
+
+Components use Tailwind's responsive prefixes (`sm:`, `md:`) for mobile-first responsive layouts:
+
+```tsx
+<div className="my-4 flex flex-col md:flex-row">
+  {/* Stacks vertically on mobile, horizontal on desktop */}
+</div>
+```
+
+## Styling approach
+
+The app uses Tailwind CSS with custom colors defined in the configuration:
+
+- `ocean-blue` - Primary ship color
+- `lollipop` - Anchored ship accent color  
+- `midnight-blue` - Text color
+- Gradient backgrounds using `from-sky-200 via-sky-300 to-cyan-200`
+- Glassmorphism with `bg-white/10 backdrop-blur-md`
