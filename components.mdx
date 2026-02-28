@@ -344,10 +344,38 @@ Components use Tailwind's responsive prefixes (`sm:`, `md:`) for mobile-first re
 
 ## Styling approach
 
-The app uses Tailwind CSS with custom colors defined in the configuration:
+The app uses Tailwind CSS with custom theme configuration defined in `tailwind.config.js`.
 
-- `ocean-blue` - Primary ship color
-- `lollipop` - Anchored ship accent color  
-- `midnight-blue` - Text color
+### Custom colors
+
+```typescript
+colors: {
+  dirt: '#E2E8F0',
+  base: '#94A3B8',
+  'midnight-blue': '#1E293B',
+  lollipop: '#F472B6',
+  grape: '#6366F1',
+  independence: '#94A3B8',
+  'ocean-blue': '#3B82F6',
+  'vista-blue': '#94A3B8',
+}
+```
+
+**Usage:**
+- `ocean-blue` (#3B82F6) - Primary ship color for normal state
+- `lollipop` (#F472B6) - Anchored ship accent color (pink)
+- `midnight-blue` (#1E293B) - Text color for messages and labels
 - Gradient backgrounds using `from-sky-200 via-sky-300 to-cyan-200`
-- Glassmorphism with `bg-white/10 backdrop-blur-md`
+- Glassmorphism with `bg-white/10 backdrop-blur-md border border-white/20`
+
+### Typography
+
+```typescript
+fontFamily: {
+  sans: ['Inter', 'sans-serif'],
+  mono: ['PT Mono', 'monospace'],
+}
+```
+
+- **Inter** - Primary sans-serif font for body text and headings
+- **PT Mono** - Monospace font for field labels (used with `font-mono` class)
